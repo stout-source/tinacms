@@ -941,12 +941,24 @@ importers:
       '@octokit/rest':
         specifier: 'catalog:'
         version: 22.0.1
+      '@stoutsource/branch-router':
+        specifier: workspace:*
+        version: link:../../../packages/@stoutsource/branch-router
+      '@stoutsource/editorial-workflow-api':
+        specifier: workspace:*
+        version: link:../../../packages/@stoutsource/editorial-workflow-api
+      '@stoutsource/git-media':
+        specifier: workspace:*
+        version: link:../../../packages/@stoutsource/git-media
       '@tailwindcss/typography':
         specifier: 'catalog:'
         version: 0.5.19(tailwindcss@3.4.19(yaml@2.8.2))
       '@tinacms/datalayer':
         specifier: workspace:*
         version: link:../../../packages/@tinacms/datalayer
+      '@tinacms/graphql':
+        specifier: workspace:*
+        version: link:../../../packages/@tinacms/graphql
       date-fns:
         specifier: ^2.30.0
         version: 2.30.0
@@ -1108,6 +1120,110 @@ importers:
       vite:
         specifier: ^6.0.0
         version: 6.4.1(@types/node@25.1.0)(jiti@2.6.1)(lightningcss@1.31.1)(sass@1.97.3)(terser@5.46.0)(yaml@2.8.2)
+
+  packages/@stoutsource/branch-router:
+    dependencies:
+      '@stoutsource/git-provider-branching':
+        specifier: workspace:*
+        version: link:../git-provider-branching
+      tinacms-gitprovider-github:
+        specifier: workspace:*
+        version: link:../../tinacms-gitprovider-github
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+    devDependencies:
+      '@tinacms/graphql':
+        specifier: workspace:*
+        version: link:../../@tinacms/graphql
+      '@tinacms/scripts':
+        specifier: workspace:*
+        version: link:../../@tinacms/scripts
+      '@types/node':
+        specifier: ^22.13.1
+        version: 22.19.3
+
+  packages/@stoutsource/editorial-workflow-api:
+    dependencies:
+      '@octokit/rest':
+        specifier: 'catalog:'
+        version: 22.0.1
+      '@stoutsource/branch-router':
+        specifier: workspace:*
+        version: link:../branch-router
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+    devDependencies:
+      '@tinacms/scripts':
+        specifier: workspace:*
+        version: link:../../@tinacms/scripts
+      '@types/node':
+        specifier: ^22.13.1
+        version: 22.19.3
+
+  packages/@stoutsource/editorial-workflow-ui:
+    dependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+    devDependencies:
+      '@tinacms/scripts':
+        specifier: workspace:*
+        version: link:../../@tinacms/scripts
+      '@types/node':
+        specifier: ^22.13.1
+        version: 22.19.3
+      '@types/react':
+        specifier: ^18.3.0
+        version: 18.3.27
+      react:
+        specifier: ^18.3.0
+        version: 18.3.1
+
+  packages/@stoutsource/git-media:
+    dependencies:
+      '@octokit/rest':
+        specifier: 'catalog:'
+        version: 22.0.1
+      busboy:
+        specifier: ^1.6.0
+        version: 1.6.0
+      tinacms:
+        specifier: workspace:*
+        version: link:../../tinacms
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+    devDependencies:
+      '@tinacms/scripts':
+        specifier: workspace:*
+        version: link:../../@tinacms/scripts
+      '@types/busboy':
+        specifier: ^1.5.4
+        version: 1.5.4
+      '@types/node':
+        specifier: ^22.13.1
+        version: 22.19.3
+
+  packages/@stoutsource/git-provider-branching:
+    dependencies:
+      '@tinacms/datalayer':
+        specifier: workspace:*
+        version: link:../../@tinacms/datalayer
+      tinacms-gitprovider-github:
+        specifier: workspace:*
+        version: link:../../tinacms-gitprovider-github
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+    devDependencies:
+      '@tinacms/scripts':
+        specifier: workspace:*
+        version: link:../../@tinacms/scripts
+      '@types/node':
+        specifier: ^22.13.1
+        version: 22.19.3
 
   packages/@tinacms/app:
     dependencies:
@@ -7082,6 +7198,9 @@ packages:
 
   '@types/braces@3.0.5':
     resolution: {integrity: sha512-SQFof9H+LXeWNz8wDe7oN5zu7ket0qwMu5vZubW4GCJ8Kkeh6nBWUz87+KTz/G3Kqsrp0j/W253XJb3KMEeg3w==}
+
+  '@types/busboy@1.5.4':
+    resolution: {integrity: sha512-kG7WrUuAKK0NoyxfQHsVE6j1m01s6kMma64E+OZenQABMQyTJop1DumUWcLwAQ2JzpefU7PDYoRDKl8uZosFjw==}
 
   '@types/chai-subset@1.3.6':
     resolution: {integrity: sha512-m8lERkkQj+uek18hXOZuec3W/fCRTrU4hrnXjH3qhHy96ytuPaPiWGgu7sJb7tZxZonO75vYAjCvpe/e4VUwRw==}
@@ -20345,6 +20464,10 @@ snapshots:
       '@types/node': 25.1.0
 
   '@types/braces@3.0.5': {}
+
+  '@types/busboy@1.5.4':
+    dependencies:
+      '@types/node': 25.1.0
 
   '@types/chai-subset@1.3.6(@types/chai@4.3.20)':
     dependencies:

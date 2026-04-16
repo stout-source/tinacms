@@ -15,8 +15,12 @@
   "dependencies": {
     "@headlessui/react": "2.1.8",
     "@octokit/rest": "catalog:",
+    "@stoutsource/branch-router": "workspace:*",
+    "@stoutsource/editorial-workflow-api": "workspace:*",
+    "@stoutsource/git-media": "workspace:*",
     "@tailwindcss/typography": "catalog:",
     "@tinacms/datalayer": "workspace:*",
+    "@tinacms/graphql": "workspace:*",
     "date-fns": "^2.30.0",
     "mongodb-level": "^0.0.3",
     "next": "14.2.35",
