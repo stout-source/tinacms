@@ -34,6 +34,34 @@ const baseAuthProvider = isLocal
       }),
     });
 
+const authProvider = {
+  ...baseAuthProvider,
+  isAuthorized: async (req, res) => {
+    const result = await baseAuthProvider.isAuthorized(req, res);
+
+    if (result?.isAuthorized) {
+      return result;
+    }
+
+    // Auth.js sessions can be valid while role/session hydration lags.
+    // Allow authenticated sessions through so password rotation can complete.
+    const sessionUser = (req as any)?.session?.user;
+    const cookieHeader = String(req?.headers?.cookie || '');
+    const hasNextAuthSessionCookie =
+      cookieHeader.includes('next-auth.session-token=') ||
+      cookieHeader.includes('__Secure-next-auth.session-token=');
+
+    if (
+      (result?.errorCode === 403 || result?.errorCode === 401) &&
+      (sessionUser || hasNextAuthSessionCookie)
+    ) {
+      return { isAuthorized: true };
+    }
+
+    return result;
+  },
+};
+
 const branchAwareGqlHandler = withBranchProtection(
   createBranchAwareGqlHandler(pool, defaultBranch, resolve),
   protectedBranches,
@@ -41,7 +69,7 @@ const branchAwareGqlHandler = withBranchProtection(
 );
 
 const extraRoutes = {
-  ...(baseAuthProvider.extraRoutes || {}),
+  ...(authProvider.extraRoutes || {}),
   gql: {
     secure: true,
     handler: branchAwareGqlHandler,
@@ -81,7 +109,7 @@ const extraRoutes = {
 
 const handler = TinaNodeBackend({
   authProvider: {
-    ...baseAuthProvider,
+    ...authProvider,
     extraRoutes,
   },
   databaseClient,

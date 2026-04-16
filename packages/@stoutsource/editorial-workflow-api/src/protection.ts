@@ -28,7 +28,10 @@ export function withBranchProtection(
 
     if (protectedBranches.includes(branch)) {
       const body = ((req as any).body?.query as string | undefined)?.trimStart() ?? ''
-      if (body.startsWith('mutation')) {
+      const isMutation = body.startsWith('mutation')
+      const isAllowedAuthMutation = /\bupdatePassword\b/.test(body)
+
+      if (isMutation && !isAllowedAuthMutation) {
         res.statusCode = 403
         res.setHeader('Content-Type', 'application/json')
         res.end(
