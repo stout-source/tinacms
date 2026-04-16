@@ -29,7 +29,7 @@
     "react-dom": "^18.3.1",
     "react-icons": "^4.12.0",
     "tinacms": "workspace:*",
-    "tinacms-authjs": "workspace:*",
+    "tinacms-authjs": "21.0.2",
     "tinacms-gitprovider-github": "workspace:*"
   },
   "devDependencies": {
@@ -43,11 +43,16 @@
     "@typescript-eslint/parser": "catalog:",
     "autoprefixer": "catalog:",
     "cross-env": "^7.0.3",
-    "eslint": "^8.57.1",
+    "eslint": "^9.39.2",
     "postcss": "^8.5.2",
     "postcss-import": "catalog:",
     "postcss-nesting": "catalog:",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "tinacms-authjs@21.0.2": "patches/tinacms-authjs@21.0.2.patch"
+    }
   }
 }

@@ -163,13 +163,26 @@ export class GitHubMediaStore {
   async delete(media: Media): Promise<void> {
     const normalizedDirectory = this.normalizePathPart(media.directory ?? '')
     const normalizedFilename = this.normalizePathPart(media.filename ?? '')
-    const path = normalizedDirectory
+    const relativePath = normalizedDirectory
       ? `${normalizedDirectory}/${normalizedFilename}`
       : normalizedFilename
-
-    await fetch(
-      `${this.opts.deleteEndpoint}/${encodeURIComponent(path)}`,
-      { method: 'DELETE' }
+    const filePath = this.normalizePathPart(
+      `${this.opts.publicFolder}/${this.opts.mediaRoot}/${relativePath}`
     )
+
+    const res = await fetch(`${this.opts.deleteEndpoint}/${encodeURIComponent(filePath)}`, {
+      method: 'DELETE',
+    })
+
+    if (!res.ok) {
+      let message = 'Delete failed'
+      try {
+        const data = (await res.json()) as { error?: string }
+        message = data.error ?? message
+      } catch {
+        // Fall back to generic message when the server does not return JSON.
+      }
+      throw new Error(message)
+    }
   }
 }

@@ -224,7 +224,11 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
         if (subPath.startsWith('delete/')) {
           const branch = resolveBranch(req)
           const rawPath = subPath.replace(/^delete\//, '')
-          const filePath = normalizePathPart(decodeURIComponent(rawPath))
+          const requestedPath = normalizePathPart(decodeURIComponent(rawPath))
+          const mediaBasePath = joinPathParts(opts.publicFolder, opts.mediaRoot)
+          const filePath = requestedPath.startsWith(`${mediaBasePath}/`)
+            ? requestedPath
+            : joinPathParts(mediaBasePath, requestedPath)
 
           if (!filePath) {
             jsonEnd(res, 400, { error: 'Missing file path' })

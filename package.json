@@ -25,6 +25,7 @@
 		"publish:beta": "pnpm publish -r --tag beta --no-git-checks --access public",
 		"publish:dev": "pnpm publish -r --tag dev --no-git-checks --access public",
 		"push-tags": "pnpm exec changeset tag && git pull && git push --follow-tags",
+		"export:self-hosted-demo": "node scripts/export-example.js examples/next/tina-self-hosted-demo exported/tina-self-hosted-demo",
 		"lint": "biome lint ./packages ./examples",
 		"format": "biome format --write ./packages/ ./examples/"
 	},
