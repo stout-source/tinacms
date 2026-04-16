@@ -2,6 +2,8 @@
 [![npm version](https://img.shields.io/npm/v/tinacms.svg?style=flat)](https://www.npmjs.com/package/tinacms)
 [![Build, Test, Lint for Main](https://github.com/tinacms/tinacms/actions/workflows/main.yml/badge.svg?branch=main&event=push)](https://github.com/tinacms/tinacms/actions/workflows/main.yml)
 
+Note: Uses custom React 18 patch
+
 # [![TINA CMS](https://res.cloudinary.com/forestry-demo/image/upload/c_scale,w_400/v1694189357/tina-brand-assets/logos/png/Logo_Full_-_Default.png 'Visit tinacms.org')](https://tina.io)
 
 [![Tina Demo](https://res.cloudinary.com/forestry-demo/video/upload/du_16,w_700,e_loop/tina-io/new-homepage/homepage-demo-2.gif)](https://tina.io/)
