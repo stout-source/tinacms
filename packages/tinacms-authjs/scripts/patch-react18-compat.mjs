@@ -13,11 +13,11 @@ function replaceOrThrow(source, from, to, label) {
 const run = async () => {
   let code = await readFile(filePath, 'utf8');
 
-  // 1) Production jsx runtime symbol: React 18 uses react.element, React 19 uses react.transitional.element
+  // 1) Production jsx runtime symbol: rewrite react.transitional.element (React 19) to react.element (React 18 compatible)
   code = replaceOrThrow(
     code,
     'var REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");',
-    'var React = require$$0, REACT_ELEMENT_TYPE = Symbol.for(React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE ? "react.transitional.element" : "react.element"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");',
+    'var REACT_ELEMENT_TYPE = Symbol.for("react.element"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");',
     'production REACT_ELEMENT_TYPE'
   );
 
