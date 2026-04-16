@@ -35,7 +35,7 @@ blocks:
         icon: false
         link: /posts
     image:
-      src: 'https://raw.githubusercontent.com/stout-source/tinacms/HEAD/public/uploads/bear-logo.png'
+      src: 'https://raw.githubusercontent.com/stout-source/tinacms/HEAD/public/uploads/bear-games.svg'
       alt: Photo of palm trees at sunset by Adam Birkett - unsplash.com/photos/75EFpyXu3Wg
     color: default
     _template: hero
