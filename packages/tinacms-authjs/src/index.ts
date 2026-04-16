@@ -4,6 +4,24 @@ import { getServerSession } from 'next-auth/next';
 import type { BackendAuthProvider } from '@tinacms/datalayer';
 import { TINA_CREDENTIALS_PROVIDER_NAME } from './tinacms';
 
+type Callable = (...args: Array<any>) => any;
+
+const resolveCallableExport = <T extends Callable>(
+  value: unknown,
+  label: string
+): T => {
+  let current: any = value;
+  for (let i = 0; i < 5; i++) {
+    if (typeof current === 'function') return current as T;
+    if (current && typeof current === 'object' && 'default' in current) {
+      current = (current as { default: unknown }).default;
+      continue;
+    }
+    break;
+  }
+  throw new Error(`${label} export is not callable`);
+};
+
 const authenticate = async (
   databaseClient: any,
   username: string,
@@ -81,12 +99,16 @@ const TinaCredentialsProvider = ({
   databaseClient: any; // TODO can we type this?
   name?: string;
 }) => {
-  const p = CredentialsProvider({
+  const credentialsProviderFactory = resolveCallableExport<Callable>(
+    CredentialsProvider,
+    'next-auth credentials provider'
+  );
+  const p = credentialsProviderFactory({
     credentials: {
       username: { label: 'Username', type: 'text' },
       password: { label: 'Password', type: 'password' },
     },
-    authorize: async (credentials) =>
+    authorize: async (credentials: any) =>
       authenticate(databaseClient, credentials.username, credentials.password),
   });
   p.name = name;
@@ -161,13 +183,18 @@ const AuthJsBackendAuthProvider = ({
           // This is required for NextAuth to work properly
           // @ts-ignore
           req.query.nextauth = authSubRoutes;
-          await NextAuth(authOptions)(req, res);
+          const nextAuthFactory = resolveCallableExport<Callable>(
+            NextAuth,
+            'next-auth handler'
+          );
+          await nextAuthFactory(authOptions)(req, res);
         },
       },
     },
   };
   return authProvider;
 };
+
 export {
   TinaCredentialsProvider,
   TinaAuthJSOptions,
