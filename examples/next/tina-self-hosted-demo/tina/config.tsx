@@ -1,3 +1,4 @@
+import { GitHubMediaStore } from '@stoutsource/git-media/store';
 import { LocalAuthProvider, defineStaticConfig } from 'tinacms';
 
 import { contentBlockSchema } from '@/components/blocks/content';
@@ -12,28 +13,34 @@ import {
 } from 'tinacms-authjs/dist/tinacms';
 
 const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
+const defaultBranch =
+  process.env.NEXT_PUBLIC_TINA_BRANCH! ||
+  process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF! ||
+  process.env.HEAD!;
+
 const config = defineStaticConfig({
   contentApiUrlOverride: '/api/tina/gql',
   clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID!,
   authProvider: isLocal
     ? new LocalAuthProvider()
     : new UsernamePasswordAuthJSProvider(),
-  branch:
-    process.env.NEXT_PUBLIC_TINA_BRANCH! || // custom branch env override
-    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF! || // Vercel branch env
-    process.env.HEAD!, // Netlify branch env
+  branch: defaultBranch,
   token: process.env.TINA_TOKEN!,
+  ui: {},
   media: {
-    // If you wanted cloudinary do this
-    // loadCustomStore: async () => {
-    //   const pack = await import("next-tinacms-cloudinary");
-    //   return pack.TinaCloudCloudinaryMediaStore;
-    // },
-    // this is the config for the TinaCloud media store
-    tina: {
-      publicFolder: 'public',
-      mediaRoot: 'uploads',
-      static: true,
+    loadCustomStore: async () => {
+      return class extends GitHubMediaStore {
+        constructor() {
+          super({
+            uploadEndpoint: '/api/tina/media/upload',
+            listEndpoint: '/api/tina/media/list',
+            deleteEndpoint: '/api/tina/media/delete',
+            publicFolder: 'public',
+            mediaRoot: 'uploads',
+            cdnBaseUrl: process.env.NEXT_PUBLIC_MEDIA_CDN_URL,
+          });
+        }
+      };
     },
   },
   build: {
