@@ -8,18 +8,31 @@ import {
   withBranchProtection,
 } from '@stoutsource/editorial-workflow-api';
 import { makeMediaRoutes } from '@stoutsource/git-media';
+import AzureADProvider from 'next-auth/providers/azure-ad';
 
 import { TinaAuthJSOptions, AuthJsBackendAuthProvider } from 'tinacms-authjs';
+import { AZURE_ENTRA_ID_AUTH_PROVIDER_NAME } from '../../../tina/auth/azure-entra-id-provider';
 
 import databaseClient from '../../../tina/__generated__/databaseClient';
 import { pool } from '../../../tina/database';
 
 const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
+const useAzureEntraId =
+  process.env.NEXT_PUBLIC_TINA_AUTH_PROVIDER ===
+  AZURE_ENTRA_ID_AUTH_PROVIDER_NAME;
 const defaultBranch = process.env.GITHUB_BRANCH || 'main';
 const protectedBranches = (process.env.PROTECTED_BRANCHES || defaultBranch)
   .split(',')
   .map((branch) => branch.trim())
   .filter(Boolean);
+
+const requiredEnv = (name: string): string => {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required when using Azure Entra ID auth.`);
+  }
+  return value;
+};
 
 const octokit = new Octokit({
   auth: process.env.GITHUB_PERSONAL_ACCESS_TOKEN,
@@ -31,6 +44,15 @@ const baseAuthProvider = isLocal
       authOptions: TinaAuthJSOptions({
         databaseClient: databaseClient,
         secret: process.env.NEXTAUTH_SECRET,
+        providers: useAzureEntraId
+          ? [
+              AzureADProvider({
+                clientId: requiredEnv('AZURE_AD_CLIENT_ID'),
+                clientSecret: requiredEnv('AZURE_AD_CLIENT_SECRET'),
+                tenantId: requiredEnv('AZURE_AD_TENANT_ID'),
+              }),
+            ]
+          : undefined,
       }),
     });
 
