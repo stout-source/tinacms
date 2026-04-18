@@ -12,6 +12,7 @@ export default {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+  transpilePackages: ["tinacms", "tinacms-authjs", "@tinacms/datalayer", "tinacms-gitprovider-github"],
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/i,

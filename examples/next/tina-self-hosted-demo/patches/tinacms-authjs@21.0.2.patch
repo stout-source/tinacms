@@ -1,0 +1,99 @@
+diff --git a/dist/index.js b/dist/index.js
+index 13c1c4a82a0ef3a0b6f675d76ea51724b0f7a29e..42d5118c41aafa568145fba1c26b51c4f41966f8 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -72,7 +72,14 @@ var TinaCredentialsProvider = ({
+   databaseClient,
+   name = TINA_CREDENTIALS_PROVIDER_NAME
+ }) => {
+-  const p = CredentialsProvider({
++  let credentialsProviderFactory = CredentialsProvider;
++  for (let i = 0; i < 5 && credentialsProviderFactory && "function" !== typeof credentialsProviderFactory && credentialsProviderFactory.default; i++) {
++    credentialsProviderFactory = credentialsProviderFactory.default;
++  }
++  if (typeof credentialsProviderFactory !== "function") {
++    throw new Error("next-auth credentials provider factory is not callable");
++  }
++  const p = credentialsProviderFactory({
+     credentials: {
+       username: { label: "Username", type: "text" },
+       password: { label: "Password", type: "password" }
+@@ -131,7 +138,14 @@ var AuthJsBackendAuthProvider = ({
+           );
+           const authSubRoutes = url.pathname?.replace(`${opts.basePath}auth/`, "")?.split("/");
+           req.query.nextauth = authSubRoutes;
+-          await NextAuth(authOptions)(req, res);
++          let nextAuthFactory = NextAuth;
++          for (let i = 0; i < 5 && nextAuthFactory && "function" !== typeof nextAuthFactory && nextAuthFactory.default; i++) {
++            nextAuthFactory = nextAuthFactory.default;
++          }
++          if (typeof nextAuthFactory !== "function") {
++            throw new Error("next-auth handler factory is not callable");
++          }
++          await nextAuthFactory(authOptions)(req, res);
+         }
+       }
+     }
+diff --git a/dist/tinacms.js b/dist/tinacms.js
+index d9163069f3c374554fbf60e096f7f2c7eaadc6ff..8cbd0eead99d441f14d98c1e79da76cc3dafb9fb 100644
+--- a/dist/tinacms.js
++++ b/dist/tinacms.js
+@@ -1432,7 +1432,7 @@ function requireReactJsxRuntime_production() {
+   if (hasRequiredReactJsxRuntime_production)
+     return reactJsxRuntime_production;
+   hasRequiredReactJsxRuntime_production = 1;
+-  var REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");
++  var React = require$$0, REACT_ELEMENT_TYPE = Symbol.for(React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE ? "react.transitional.element" : "react.element"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");
+   function jsxProd(type, config, maybeKey) {
+     var key = null;
+     void 0 !== maybeKey && (key = "" + maybeKey);
+@@ -1556,8 +1556,12 @@ function requireReactJsxRuntime_development() {
+       }
+     }
+     function getOwner() {
+-      var dispatcher = ReactSharedInternals.A;
+-      return null === dispatcher ? null : dispatcher.getOwner();
++      var dispatcher = ReactSharedInternals && (ReactSharedInternals.A || ReactSharedInternals.ReactCurrentOwner);
++      if (null == dispatcher)
++        return null;
++      if ("function" === typeof dispatcher.getOwner)
++        return dispatcher.getOwner();
++      return dispatcher.current || null;
+     }
+     function UnknownOwner() {
+       return Error("react-stack-top-frame");
+@@ -1688,7 +1692,7 @@ function requireReactJsxRuntime_development() {
+     function isValidElement(object) {
+       return "object" === typeof object && null !== object && object.$$typeof === REACT_ELEMENT_TYPE;
+     }
+-    var React = require$$0, REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
++    var React = require$$0, REACT_ELEMENT_TYPE = Symbol.for(React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE ? "react.transitional.element" : "react.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE || React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED || null, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
+       return null;
+     };
+     React = {
+@@ -1704,9 +1708,15 @@ function requireReactJsxRuntime_development() {
+     )();
+     var unknownOwnerDebugTask = createTask(getTaskName(UnknownOwner));
+     var didWarnAboutKeySpread = {};
++    var recentlyCreatedOwnerStacks = ReactSharedInternals && "number" === typeof ReactSharedInternals.recentlyCreatedOwnerStacks ? ReactSharedInternals.recentlyCreatedOwnerStacks : 0;
++    var getTrackActualOwner = function() {
++      if (ReactSharedInternals && "number" === typeof ReactSharedInternals.recentlyCreatedOwnerStacks)
++        return 1e4 > ReactSharedInternals.recentlyCreatedOwnerStacks++;
++      return 1e4 > recentlyCreatedOwnerStacks++;
++    };
+     reactJsxRuntime_development.Fragment = REACT_FRAGMENT_TYPE;
+     reactJsxRuntime_development.jsx = function(type, config, maybeKey) {
+-      var trackActualOwner = 1e4 > ReactSharedInternals.recentlyCreatedOwnerStacks++;
++      var trackActualOwner = getTrackActualOwner();
+       return jsxDEVImpl(
+         type,
+         config,
+@@ -1717,7 +1727,7 @@ function requireReactJsxRuntime_development() {
+       );
+     };
+     reactJsxRuntime_development.jsxs = function(type, config, maybeKey) {
+-      var trackActualOwner = 1e4 > ReactSharedInternals.recentlyCreatedOwnerStacks++;
++      var trackActualOwner = getTrackActualOwner();
+       return jsxDEVImpl(
+         type,
+         config,

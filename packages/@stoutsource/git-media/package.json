@@ -1,0 +1,64 @@
+{
+  "name": "@stoutsource/git-media",
+  "type": "module",
+  "version": "0.3.0",
+  "main": "dist/index.js",
+  "module": "./dist/index.js",
+  "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./store": {
+        "types": "./dist/store-entry.d.ts",
+        "default": "./dist/store-entry.js"
+      }
+  },
+    "typesVersions": {
+      "*": {
+        "store": [
+          "dist/store-entry.d.ts"
+        ]
+      }
+    },
+  "files": [
+    "dist"
+  ],
+  "typings": "dist/index.d.ts",
+  "license": "Apache-2.0",
+  "buildConfig": {
+    "entryPoints": [
+      {
+        "name": "src/index.ts",
+        "target": "node"
+      },
+      {
+        "name": "src/store-entry.ts",
+        "target": "browser"
+      }
+    ]
+  },
+  "scripts": {
+    "types": "pnpm tsc",
+    "build": "tinacms-scripts build"
+  },
+  "dependencies": {
+    "@octokit/rest": "catalog:",
+    "busboy": "^1.6.0",
+    "typescript": "^5.7.3"
+  },
+  "devDependencies": {
+    "@tinacms/scripts": "workspace:*",
+    "@types/busboy": "^1.5.4",
+    "@types/node": "^22.13.1"
+  },
+  "peerDependencies": {
+    "tinacms": "workspace:*"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
+  },
+  "repository": {
+    "url": "https://github.com/stout-source/git-media.git"
+  }
+}
