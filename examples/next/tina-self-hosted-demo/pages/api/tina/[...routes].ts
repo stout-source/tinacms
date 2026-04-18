@@ -11,27 +11,37 @@ import { makeMediaRoutes } from '@stoutsource/git-media';
 import AzureADProvider from 'next-auth/providers/azure-ad';
 
 import { TinaAuthJSOptions, AuthJsBackendAuthProvider } from 'tinacms-authjs';
-import { AZURE_ENTRA_ID_AUTH_PROVIDER_NAME } from '../../../tina/auth/azure-entra-id-provider';
+import { isAzureEntraIdAuthEnabled } from '../../../tina/auth/azure-entra-id-provider';
 
 import databaseClient from '../../../tina/__generated__/databaseClient';
 import { pool } from '../../../tina/database';
 
 const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
-const isAzureEntraIdEnabled =
-  process.env.NEXT_PUBLIC_TINA_AUTH_PROVIDER ===
-  AZURE_ENTRA_ID_AUTH_PROVIDER_NAME;
+const isAzureEntraIdEnabled = isAzureEntraIdAuthEnabled();
 const defaultBranch = process.env.GITHUB_BRANCH || 'main';
 const protectedBranches = (process.env.PROTECTED_BRANCHES || defaultBranch)
   .split(',')
   .map((branch) => branch.trim())
   .filter(Boolean);
 
-const requiredAzureEnv = (name: string): string => {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} is required when using Azure Entra ID auth.`);
+const getAzureProviderOptions = () => {
+  const requiredVars = [
+    'AZURE_AD_CLIENT_ID',
+    'AZURE_AD_CLIENT_SECRET',
+    'AZURE_AD_TENANT_ID',
+  ] as const;
+  const missingVars = requiredVars.filter((name) => !process.env[name]);
+
+  if (missingVars.length) {
+    throw new Error(
+      `Missing required Azure Entra ID env vars: ${missingVars.join(', ')}`
+    );
   }
-  return value;
+  return {
+    clientId: process.env.AZURE_AD_CLIENT_ID as string,
+    clientSecret: process.env.AZURE_AD_CLIENT_SECRET as string,
+    tenantId: process.env.AZURE_AD_TENANT_ID as string,
+  };
 };
 
 const octokit = new Octokit({
@@ -45,13 +55,7 @@ const baseAuthProvider = isLocal
         databaseClient: databaseClient,
         secret: process.env.NEXTAUTH_SECRET,
         providers: isAzureEntraIdEnabled
-          ? [
-              AzureADProvider({
-                clientId: requiredAzureEnv('AZURE_AD_CLIENT_ID'),
-                clientSecret: requiredAzureEnv('AZURE_AD_CLIENT_SECRET'),
-                tenantId: requiredAzureEnv('AZURE_AD_TENANT_ID'),
-              }),
-            ]
+          ? [AzureADProvider(getAzureProviderOptions())]
           : undefined,
       }),
     });
