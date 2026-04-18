@@ -102,6 +102,7 @@ export const FormBuilder: FC<FormBuilderProps> = ({
   const [deletedBranchModalOpen, setDeletedBranchModalOpen] =
     React.useState(false);
   const [isGuardChecking, setIsGuardChecking] = React.useState(false);
+  const ActionsButton = cms.api.tina?.schema.config.config.ui?.actionsButton;
 
   const tinaForm = form.tinaForm;
   const finalForm = form.tinaForm.finalForm;
@@ -321,6 +322,7 @@ export const FormBuilder: FC<FormBuilderProps> = ({
                   <RelatedFilesBanner />
                   <div className='relative flex-none w-full h-16 px-6 bg-white border-t border-gray-100 flex items-center justify-end'>
                     <div className='flex-1 w-full justify-end gap-2	flex items-center max-w-form'>
+                      {ActionsButton && <ActionsButton />}
                       {tinaForm.reset && (
                         <ResetForm
                           pristine={pristine}

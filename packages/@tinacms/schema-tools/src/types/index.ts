@@ -667,6 +667,7 @@ export interface Config<
    */
   token?: string | null;
   ui?: {
+    actionsButton?: FC<any> | null;
     /**
      * When using TinaCloud's branching feature, provide the URL for your given branch
      *
