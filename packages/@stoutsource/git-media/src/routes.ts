@@ -52,6 +52,13 @@ function joinPathParts(...parts: string[]): string {
     .join('/')
 }
 
+function encodeGithubPath(path: string): string {
+  return normalizePathPart(path)
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/')
+}
+
 /**
  * Returns a route map ready to spread into authProvider.extraRoutes.
  *
@@ -63,6 +70,40 @@ function joinPathParts(...parts: string[]): string {
  * The GitHub PAT (inside opts.octokit) never reaches the browser.
  */
 export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
+  async function getContent(branch: string, filePath: string) {
+    return opts.octokit.request({
+      method: 'GET',
+      url: `/repos/${opts.owner}/${opts.repo}/contents/${encodeGithubPath(filePath)}`,
+      ref: branch,
+    })
+  }
+
+  async function putContent(
+    branch: string,
+    filePath: string,
+    contentBase64: string,
+    sha?: string
+  ) {
+    return opts.octokit.request({
+      method: 'PUT',
+      url: `/repos/${opts.owner}/${opts.repo}/contents/${encodeGithubPath(filePath)}`,
+      message: `chore: upload media via Stoutsource [${branch}]`,
+      content: contentBase64,
+      branch,
+      sha,
+    })
+  }
+
+  async function deleteContent(branch: string, filePath: string, sha: string) {
+    return opts.octokit.request({
+      method: 'DELETE',
+      url: `/repos/${opts.owner}/${opts.repo}/contents/${encodeGithubPath(filePath)}`,
+      message: `chore: delete media via Stoutsource [${branch}]`,
+      sha,
+      branch,
+    })
+  }
+
   async function writeLocalFile(filePath: string, content: Buffer): Promise<void> {
     if (!opts.localWriteDir) return
     const dest = join(opts.localWriteDir, filePath)
@@ -137,12 +178,7 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
 
             let sha: string | undefined
             try {
-              const { data } = await opts.octokit.request('GET /repos/{owner}/{repo}/contents/{+path}', {
-                owner: opts.owner,
-                repo: opts.repo,
-                path: filePath,
-                ref: branch,
-              })
+              const { data } = await getContent(branch, filePath)
               if ('sha' in data) sha = (data as any).sha
             } catch {
               // File does not yet exist — sha stays undefined
@@ -150,15 +186,7 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
 
             await writeLocalFile(filePath, Buffer.from(contentBase64, 'base64'))
 
-            await opts.octokit.request('PUT /repos/{owner}/{repo}/contents/{+path}', {
-              owner: opts.owner,
-              repo: opts.repo,
-              path: filePath,
-              message: `chore: upload media via Stoutsource [${branch}]`,
-              content: contentBase64,
-              branch,
-              sha,
-            })
+            await putContent(branch, filePath, contentBase64, sha)
 
             jsonEnd(res, 200, { src: staticPath(filePath), previewSrc: publicUrl(filePath) })
             return
@@ -192,12 +220,7 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
               // Fetch existing SHA if the file already exists (required for updates)
               let sha: string | undefined
               try {
-                const { data } = await opts.octokit.request('GET /repos/{owner}/{repo}/contents/{+path}', {
-                  owner: opts.owner,
-                  repo: opts.repo,
-                  path: filePath,
-                  ref: branch,
-                })
+                const { data } = await getContent(branch, filePath)
                 if ('sha' in data) sha = (data as any).sha
               } catch {
                 // File does not yet exist — sha stays undefined
@@ -205,15 +228,7 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
 
               await writeLocalFile(filePath, content)
 
-              await opts.octokit.request('PUT /repos/{owner}/{repo}/contents/{+path}', {
-                owner: opts.owner,
-                repo: opts.repo,
-                path: filePath,
-                message: `chore: upload media via Stoutsource [${branch}]`,
-                content: content.toString('base64'),
-                branch,
-                sha,
-              })
+              await putContent(branch, filePath, content.toString('base64'), sha)
 
               jsonEnd(res, 200, { src: staticPath(filePath), previewSrc: publicUrl(filePath) })
               resolve()
@@ -240,12 +255,7 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
 
           let items: Array<{ type: string; name: string; path: string }> = []
           try {
-            const { data } = await opts.octokit.request('GET /repos/{owner}/{repo}/contents/{+path}', {
-              owner: opts.owner,
-              repo: opts.repo,
-              path: mediaPath,
-              ref: branch,
-            })
+            const { data } = await getContent(branch, mediaPath)
             items = Array.isArray(data) ? (data as typeof items) : []
           } catch {
             // Directory absent — return empty list
@@ -281,12 +291,7 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
 
           let sha: string
           try {
-            const { data } = await opts.octokit.request('GET /repos/{owner}/{repo}/contents/{+path}', {
-              owner: opts.owner,
-              repo: opts.repo,
-              path: filePath,
-              ref: branch,
-            })
+            const { data } = await getContent(branch, filePath)
             if (!('sha' in data)) {
               jsonEnd(res, 404, { error: 'Not found' })
               return
@@ -297,14 +302,7 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
             return
           }
 
-          await opts.octokit.request('DELETE /repos/{owner}/{repo}/contents/{+path}', {
-            owner: opts.owner,
-            repo: opts.repo,
-            path: filePath,
-            message: `chore: delete media via Stoutsource [${branch}]`,
-            sha,
-            branch,
-          })
+          await deleteContent(branch, filePath, sha)
 
           await deleteLocalFile(filePath)
 
