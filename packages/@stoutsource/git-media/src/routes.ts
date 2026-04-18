@@ -1,4 +1,6 @@
 import busboy from 'busboy'
+import { mkdir, writeFile, unlink } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import type { IncomingMessage, ServerResponse } from 'http'
 import type { Octokit } from '@octokit/rest'
 
@@ -13,6 +15,14 @@ export interface MediaRoutesOptions {
   publicFolder: string
   mediaRoot: string
   cdnBaseUrl?: string
+  /**
+   * When set, uploaded files are also written to the local filesystem at
+   * `localWriteDir/<filePath>` (e.g. `process.cwd()`). Useful in local dev
+   * mode so that files committed to GitHub are immediately accessible at
+   * the static path (e.g. `/uploads/image.jpg`) without a server restart.
+   * Deleted files are removed from disk as well.
+   */
+  localWriteDir?: string
 }
 
 function parseBranchCookie(cookieHeader: string): string | null {
@@ -53,6 +63,22 @@ function joinPathParts(...parts: string[]): string {
  * The GitHub PAT (inside opts.octokit) never reaches the browser.
  */
 export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
+  async function writeLocalFile(filePath: string, content: Buffer): Promise<void> {
+    if (!opts.localWriteDir) return
+    const dest = join(opts.localWriteDir, filePath)
+    await mkdir(dirname(dest), { recursive: true })
+    await writeFile(dest, content)
+  }
+
+  async function deleteLocalFile(filePath: string): Promise<void> {
+    if (!opts.localWriteDir) return
+    try {
+      await unlink(join(opts.localWriteDir, filePath))
+    } catch {
+      // File may not exist locally — ignore
+    }
+  }
+
   function resolveBranch(req: IncomingMessage): string {
     const cookie = (req.headers?.cookie as string) ?? ''
     return parseBranchCookie(cookie) ?? opts.defaultBranch
@@ -63,6 +89,20 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
       return `${opts.cdnBaseUrl.replace(/\/$/, '')}/${filePath}`
     }
     return `https://raw.githubusercontent.com/${opts.owner}/${opts.repo}/HEAD/${filePath}`
+  }
+
+  /**
+   * Returns the server-relative static path for the file, suitable for
+   * embedding in content (e.g. the value stored in MDX/JSON).
+   * Strips the publicFolder prefix so that Next.js (or any framework that
+   * serves `publicFolder` at `/`) resolves it correctly:
+   *   "public/uploads/img.jpg"  →  "/uploads/img.jpg"
+   */
+  function staticPath(filePath: string): string {
+    const normalized = normalizePathPart(filePath)
+    const pub = normalizePathPart(opts.publicFolder)
+    const stripped = pub ? normalized.replace(new RegExp(`^${pub}/`), '') : normalized
+    return `/${stripped}`
   }
 
   return {
@@ -97,18 +137,20 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
 
             let sha: string | undefined
             try {
-              const { data } = await opts.octokit.repos.getContent({
+              const { data } = await opts.octokit.request('GET /repos/{owner}/{repo}/contents/{+path}', {
                 owner: opts.owner,
                 repo: opts.repo,
                 path: filePath,
                 ref: branch,
               })
-              if ('sha' in data) sha = data.sha
+              if ('sha' in data) sha = (data as any).sha
             } catch {
               // File does not yet exist — sha stays undefined
             }
 
-            await opts.octokit.repos.createOrUpdateFileContents({
+            await writeLocalFile(filePath, Buffer.from(contentBase64, 'base64'))
+
+            await opts.octokit.request('PUT /repos/{owner}/{repo}/contents/{+path}', {
               owner: opts.owner,
               repo: opts.repo,
               path: filePath,
@@ -118,7 +160,7 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
               sha,
             })
 
-            jsonEnd(res, 200, { src: publicUrl(filePath) })
+            jsonEnd(res, 200, { src: staticPath(filePath), previewSrc: publicUrl(filePath) })
             return
           }
 
@@ -150,18 +192,20 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
               // Fetch existing SHA if the file already exists (required for updates)
               let sha: string | undefined
               try {
-                const { data } = await opts.octokit.repos.getContent({
+                const { data } = await opts.octokit.request('GET /repos/{owner}/{repo}/contents/{+path}', {
                   owner: opts.owner,
                   repo: opts.repo,
                   path: filePath,
                   ref: branch,
                 })
-                if ('sha' in data) sha = data.sha
+                if ('sha' in data) sha = (data as any).sha
               } catch {
                 // File does not yet exist — sha stays undefined
               }
 
-              await opts.octokit.repos.createOrUpdateFileContents({
+              await writeLocalFile(filePath, content)
+
+              await opts.octokit.request('PUT /repos/{owner}/{repo}/contents/{+path}', {
                 owner: opts.owner,
                 repo: opts.repo,
                 path: filePath,
@@ -171,7 +215,7 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
                 sha,
               })
 
-              jsonEnd(res, 200, { src: publicUrl(filePath) })
+              jsonEnd(res, 200, { src: staticPath(filePath), previewSrc: publicUrl(filePath) })
               resolve()
             })
 
@@ -196,13 +240,13 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
 
           let items: Array<{ type: string; name: string; path: string }> = []
           try {
-            const { data } = await opts.octokit.repos.getContent({
+            const { data } = await opts.octokit.request('GET /repos/{owner}/{repo}/contents/{+path}', {
               owner: opts.owner,
               repo: opts.repo,
               path: mediaPath,
               ref: branch,
             })
-            items = Array.isArray(data) ? data : []
+            items = Array.isArray(data) ? (data as typeof items) : []
           } catch {
             // Directory absent — return empty list
           }
@@ -212,7 +256,7 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
           jsonEnd(res, 200, {
             files: page
               .filter((f) => f.type === 'file')
-              .map((f) => ({ filename: f.name, src: publicUrl(f.path) })),
+              .map((f) => ({ filename: f.name, src: staticPath(f.path), previewSrc: publicUrl(f.path) })),
             directories: page
               .filter((f) => f.type === 'dir')
               .map((f) => f.name),
@@ -237,7 +281,7 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
 
           let sha: string
           try {
-            const { data } = await opts.octokit.repos.getContent({
+            const { data } = await opts.octokit.request('GET /repos/{owner}/{repo}/contents/{+path}', {
               owner: opts.owner,
               repo: opts.repo,
               path: filePath,
@@ -247,13 +291,13 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
               jsonEnd(res, 404, { error: 'Not found' })
               return
             }
-            sha = data.sha
+            sha = (data as any).sha
           } catch {
             jsonEnd(res, 404, { error: 'Not found' })
             return
           }
 
-          await opts.octokit.repos.deleteFile({
+          await opts.octokit.request('DELETE /repos/{owner}/{repo}/contents/{+path}', {
             owner: opts.owner,
             repo: opts.repo,
             path: filePath,
@@ -261,6 +305,8 @@ export function makeMediaRoutes(opts: MediaRoutesOptions): RouteMap {
             sha,
             branch,
           })
+
+          await deleteLocalFile(filePath)
 
           jsonEnd(res, 200, { ok: true })
           return

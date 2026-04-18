@@ -13,9 +13,8 @@ export interface BranchSwitcherProps {
  *   import { BranchSwitcher } from '@stoutsource/editorial-workflow-ui'
  *   export default defineConfig({ ui: { actionsButton: BranchSwitcher } })
  *
- * Renders a branch dropdown. When the active branch is protected and a save
- * triggers a 403, callers can open the modal via the exported
- * `openCreateBranchModal` event helper.
+ * Renders a branch dropdown with a built-in "+ New branch" entry that opens
+ * the branch creation modal.
  */
 export function BranchSwitcher({
   apiBase = '/api/tina',

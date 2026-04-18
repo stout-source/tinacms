@@ -1,4 +1,5 @@
 import { GitHubMediaStore } from '@stoutsource/git-media/store';
+import { BranchSwitcher } from '@stoutsource/editorial-workflow-ui';
 import { LocalAuthProvider, defineStaticConfig } from 'tinacms';
 
 import { contentBlockSchema } from '@/components/blocks/content';
@@ -26,7 +27,9 @@ const config = defineStaticConfig({
     : new UsernamePasswordAuthJSProvider(),
   branch: defaultBranch,
   token: process.env.TINA_TOKEN!,
-  ui: {},
+  ui: {
+    actionsButton: BranchSwitcher,
+  },
   media: {
     loadCustomStore: async () => {
       return class extends GitHubMediaStore {

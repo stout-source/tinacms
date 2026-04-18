@@ -107,14 +107,15 @@ export class GitHubMediaStore {
         throw new Error((data as { error?: string }).error ?? 'Upload failed')
       }
 
-      const src: string = (data as { src: string }).src
+      const { src, previewSrc } = data as { src: string; previewSrc?: string }
+      const thumbnail = previewSrc ?? src
       results.push({
         id: file.name,
         type: 'file',
         filename: file.name,
         directory: normalizedDirectory,
         src,
-        thumbnails: { '75x75': src, '400x400': src, '1000x1000': src },
+        thumbnails: { '75x75': thumbnail, '400x400': thumbnail, '1000x1000': thumbnail },
       })
     }
 
@@ -132,19 +133,22 @@ export class GitHubMediaStore {
 
     const res = await fetch(`${this.opts.listEndpoint}?${params}`)
     const data = await res.json() as {
-      files: Array<{ filename: string; src: string }>
+      files: Array<{ filename: string; src: string; previewSrc?: string }>
       directories: string[]
       cursor: number | null
     }
 
-    const fileItems: Media[] = (data.files ?? []).map((f) => ({
-      id: f.filename,
-      type: 'file' as const,
-      filename: f.filename,
-      directory: normalizedDirectory,
-      src: f.src,
-      thumbnails: { '75x75': f.src, '400x400': f.src, '1000x1000': f.src },
-    }))
+    const fileItems: Media[] = (data.files ?? []).map((f) => {
+      const thumbnail = f.previewSrc ?? f.src
+      return {
+        id: f.filename,
+        type: 'file' as const,
+        filename: f.filename,
+        directory: normalizedDirectory,
+        src: f.src,
+        thumbnails: { '75x75': thumbnail, '400x400': thumbnail, '1000x1000': thumbnail },
+      }
+    })
 
     const dirItems: Media[] = (data.directories ?? []).map((name) => ({
       id: name,

@@ -90,6 +90,7 @@ const extraRoutes = {
     publicFolder: 'public',
     mediaRoot: 'uploads',
     cdnBaseUrl: process.env.MEDIA_CDN_URL,
+    localWriteDir: isLocal ? process.cwd() : undefined,
   }),
   ...(process.env.GITHUB_WEBHOOK_SECRET
     ? {

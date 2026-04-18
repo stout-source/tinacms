@@ -10,6 +10,9 @@ export interface CreateBranchModalProps {
 
 type IndexStatus = 'idle' | 'creating' | 'indexing' | 'done' | 'error'
 
+const POLL_INTERVAL_MS = 1500
+const POLL_TIMEOUT_MS = 120000
+
 export function CreateBranchModal({
   fromBranch,
   onClose,
@@ -40,21 +43,45 @@ export function CreateBranchModal({
 
       setStatus('indexing')
 
-      // Poll until status is complete or error
+      // Poll until indexing is complete/error, with a timeout guard.
       await new Promise<void>((resolve, reject) => {
+        const startedAt = Date.now()
+
         const poll = async () => {
-          const statusRes = await fetch(
-            `${apiBase}/branch/status?branch=${encodeURIComponent(branchName)}`
-          )
-          const statusData = await statusRes.json()
-          if (statusData.status === 'complete') {
-            resolve()
-          } else if (statusData.status === 'error') {
-            reject(new Error('Indexing failed'))
-          } else {
-            setTimeout(poll, 1500)
+          if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+            reject(
+              new Error(
+                'Indexing is taking longer than expected. Please try again in a moment.'
+              )
+            )
+            return
+          }
+
+          try {
+            const statusRes = await fetch(
+              `${apiBase}/branch/status?branch=${encodeURIComponent(branchName)}`
+            )
+            if (!statusRes.ok) {
+              throw new Error('Failed to fetch indexing status')
+            }
+
+            const statusData = await statusRes.json()
+            if (statusData.status === 'complete') {
+              resolve()
+            } else if (statusData.status === 'error') {
+              reject(new Error('Indexing failed'))
+            } else {
+              setTimeout(poll, POLL_INTERVAL_MS)
+            }
+          } catch (error) {
+            reject(
+              error instanceof Error
+                ? error
+                : new Error('Failed to fetch indexing status')
+            )
           }
         }
+
         poll()
       })
 

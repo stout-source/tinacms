@@ -49,6 +49,9 @@
 		"react-colorful": "catalog:"
 	},
 	"pnpm": {
+		"patchedDependencies": {
+			"tinacms-authjs@21.0.2": "patches/tinacms-authjs@21.0.2.patch"
+		},
 		"overrides": {
 			"@clerk/clerk-js>react": "19.2.3",
 			"@clerk/clerk-js>react-dom": "19.2.3",

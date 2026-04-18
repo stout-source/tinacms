@@ -666,6 +666,11 @@ overrides:
   '@clerk/clerk-js>react-dom': 19.2.3
   '@clerk/backend>react': 19.2.3
 
+patchedDependencies:
+  tinacms-authjs@21.0.2:
+    hash: xt3cglreobcyeflc7jppq4lgvq
+    path: patches/tinacms-authjs@21.0.2.patch
+
 importers:
 
   .:
@@ -947,6 +952,9 @@ importers:
       '@stoutsource/editorial-workflow-api':
         specifier: workspace:*
         version: link:../../../packages/@stoutsource/editorial-workflow-api
+      '@stoutsource/editorial-workflow-ui':
+        specifier: workspace:*
+        version: link:../../../packages/@stoutsource/editorial-workflow-ui
       '@stoutsource/git-media':
         specifier: workspace:*
         version: link:../../../packages/@stoutsource/git-media
@@ -985,7 +993,7 @@ importers:
         version: link:../../../packages/tinacms
       tinacms-authjs:
         specifier: 21.0.2
-        version: 21.0.2(next-auth@4.24.14(next@14.2.35(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.35(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tinacms@packages+tinacms)(yup@1.7.1)
+        version: 21.0.2(patch_hash=xt3cglreobcyeflc7jppq4lgvq)(next-auth@4.24.14(next@14.2.35(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.35(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tinacms@packages+tinacms)(yup@1.7.1)
       tinacms-gitprovider-github:
         specifier: workspace:*
         version: link:../../../packages/tinacms-gitprovider-github
@@ -28466,7 +28474,7 @@ snapshots:
 
   throttle-debounce@3.0.1: {}
 
-  tinacms-authjs@21.0.2(next-auth@4.24.14(next@14.2.35(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.35(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tinacms@packages+tinacms)(yup@1.7.1):
+  tinacms-authjs@21.0.2(patch_hash=xt3cglreobcyeflc7jppq4lgvq)(next-auth@4.24.14(next@14.2.35(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(next@14.2.35(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(tinacms@packages+tinacms)(yup@1.7.1):
     dependencies:
       '@tinacms/schema-tools': 2.7.1(react@18.3.1)(yup@1.7.1)
       next: 14.2.35(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

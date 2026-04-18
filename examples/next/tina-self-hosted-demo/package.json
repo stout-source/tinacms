@@ -17,6 +17,7 @@
     "@octokit/rest": "catalog:",
     "@stoutsource/branch-router": "workspace:*",
     "@stoutsource/editorial-workflow-api": "workspace:*",
+    "@stoutsource/editorial-workflow-ui": "workspace:*",
     "@stoutsource/git-media": "workspace:*",
     "@tailwindcss/typography": "catalog:",
     "@tinacms/datalayer": "workspace:*",
@@ -49,10 +50,5 @@
     "postcss-nesting": "catalog:",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.3"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "tinacms-authjs@21.0.2": "patches/tinacms-authjs@21.0.2.patch"
-    }
   }
 }
