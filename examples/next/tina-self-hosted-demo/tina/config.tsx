@@ -18,7 +18,7 @@ import {
 } from 'tinacms-authjs/dist/tinacms';
 
 const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
-const useAzureEntraId =
+const isAzureEntraIdEnabled =
   process.env.NEXT_PUBLIC_TINA_AUTH_PROVIDER ===
   AZURE_ENTRA_ID_AUTH_PROVIDER_NAME;
 const defaultBranch =
@@ -31,7 +31,7 @@ const config = defineStaticConfig({
   clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID!,
   authProvider: isLocal
     ? new LocalAuthProvider()
-    : useAzureEntraId
+    : isAzureEntraIdEnabled
       ? new AzureEntraIdAuthProvider()
       : new UsernamePasswordAuthJSProvider(),
   branch: defaultBranch,
