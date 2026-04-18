@@ -18,6 +18,7 @@ const defaultBranch =
   process.env.NEXT_PUBLIC_TINA_BRANCH! ||
   process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF! ||
   process.env.HEAD!;
+const previewHost = process.env.NEXT_PUBLIC_PREVIEW_HOST;
 
 const config = defineStaticConfig({
   contentApiUrlOverride: '/api/tina/gql',
@@ -29,6 +30,19 @@ const config = defineStaticConfig({
   token: process.env.TINA_TOKEN!,
   ui: {
     actionsButton: BranchSwitcher,
+    previewUrl: ({ branch }) => {
+      const host = previewHost?.startsWith('http')
+        ? previewHost
+        : previewHost
+          ? `https://${previewHost}`
+          : undefined;
+
+      return {
+        url: host
+          ? `${host}/api/preview?branch=${encodeURIComponent(branch)}`
+          : `/api/preview?branch=${encodeURIComponent(branch)}`,
+      };
+    },
   },
   media: {
     loadCustomStore: async () => {

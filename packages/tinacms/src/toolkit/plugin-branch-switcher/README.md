@@ -16,3 +16,25 @@ export default defineConfig({
 ```
 
 Once this flag is set, the branch switcher should automatically appear in the Global Menu.
+
+## Custom Editorial Workflow UI
+
+If you want to recreate the editorial workflow UX while keeping a merge-friendly
+upstream path, use additive extension points instead of forking `FormBuilder`:
+
+- `ui.actionsButton` can mount custom branch controls in the form footer.
+- `ui.previewUrl` enables branch-aware preview links in branch switcher flows.
+
+For custom save and branch-creation UX, Tina now exports reusable workflow
+primitives from `tinacms`:
+
+```tsx
+import {
+  useEditorialWorkflow,
+  EDITORIAL_WORKFLOW_STATUS,
+  EDITORIAL_WORKFLOW_ERROR,
+} from 'tinacms';
+```
+
+This allows external packages to reuse Tina's workflow states and execution
+logic without copying internal constants.
