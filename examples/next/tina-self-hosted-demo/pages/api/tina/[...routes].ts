@@ -41,6 +41,14 @@ const getAzureProviderOptions = () => {
     clientId: process.env.AZURE_AD_CLIENT_ID!,
     clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
     tenantId: process.env.AZURE_AD_TENANT_ID!,
+    profile(profile: any) {
+      return {
+        id: profile.oid || profile.sub,
+        name: profile.name || profile.preferred_username || profile.email,
+        email: profile.email || profile.preferred_username || profile.upn,
+        image: null,
+      };
+    },
   };
 };
 
@@ -53,6 +61,7 @@ const baseAuthProvider = isLocal
   : AuthJsBackendAuthProvider({
       authOptions: TinaAuthJSOptions({
         databaseClient: databaseClient,
+        uidProp: isAzureEntraIdEnabled ? 'email' : 'sub',
         secret: process.env.NEXTAUTH_SECRET,
         providers: isAzureEntraIdEnabled
           ? [AzureADProvider(getAzureProviderOptions())]
@@ -62,6 +71,14 @@ const baseAuthProvider = isLocal
 
 const authProvider = {
   ...baseAuthProvider,
+  initialize: async () => {
+    // Auth.js OAuth providers work in this route; skip the credentials-only warning.
+    if (isAzureEntraIdEnabled) {
+      return;
+    }
+
+    await baseAuthProvider.initialize?.();
+  },
   isAuthorized: async (req, res) => {
     const result = await baseAuthProvider.isAuthorized(req, res);
 
@@ -77,11 +94,12 @@ const authProvider = {
       cookieHeader.includes('next-auth.session-token=') ||
       cookieHeader.includes('__Secure-next-auth.session-token=');
 
-    if (
-      (result?.errorCode === 403 || result?.errorCode === 401) &&
-      (sessionUser || hasNextAuthSessionCookie)
-    ) {
-      return { isAuthorized: true };
+    const hasRecoverableAuthError =
+      'errorCode' in result &&
+      (result.errorCode === 403 || result.errorCode === 401);
+
+    if (hasRecoverableAuthError && (sessionUser || hasNextAuthSessionCookie)) {
+      return { isAuthorized: true as const };
     }
 
     return result;
