@@ -9,11 +9,16 @@ import { testimonialBlockSchema } from '@/components/blocks/testimonial';
 import { ColorPickerInput } from '@/components/fields/color';
 import { iconSchema } from '@/components/util/icon';
 import {
+  AzureEntraIdAuthProvider,
+  isAzureEntraIdAuthEnabled,
+} from './auth/azure-entra-id-provider';
+import {
   TinaUserCollection,
   UsernamePasswordAuthJSProvider,
 } from 'tinacms-authjs/dist/tinacms';
 
 const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
+const isAzureEntraIdEnabled = isAzureEntraIdAuthEnabled();
 const defaultBranch =
   process.env.NEXT_PUBLIC_TINA_BRANCH! ||
   process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF! ||
@@ -24,7 +29,9 @@ const config = defineStaticConfig({
   clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID!,
   authProvider: isLocal
     ? new LocalAuthProvider()
-    : new UsernamePasswordAuthJSProvider(),
+    : isAzureEntraIdEnabled
+      ? new AzureEntraIdAuthProvider()
+      : new UsernamePasswordAuthJSProvider(),
   branch: defaultBranch,
   token: process.env.TINA_TOKEN!,
   ui: {

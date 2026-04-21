@@ -8,18 +8,41 @@ import {
   withBranchProtection,
 } from '@stoutsource/editorial-workflow-api';
 import { makeMediaRoutes } from '@stoutsource/git-media';
+import AzureADProvider from 'next-auth/providers/azure-ad';
 
 import { TinaAuthJSOptions, AuthJsBackendAuthProvider } from 'tinacms-authjs';
+import { isAzureEntraIdAuthEnabled } from '../../../tina/auth/azure-entra-id-provider';
 
 import databaseClient from '../../../tina/__generated__/databaseClient';
 import { pool } from '../../../tina/database';
 
 const isLocal = process.env.TINA_PUBLIC_IS_LOCAL === 'true';
+const isAzureEntraIdEnabled = isAzureEntraIdAuthEnabled();
 const defaultBranch = process.env.GITHUB_BRANCH || 'main';
 const protectedBranches = (process.env.PROTECTED_BRANCHES || defaultBranch)
   .split(',')
   .map((branch) => branch.trim())
   .filter(Boolean);
+
+const getAzureProviderOptions = () => {
+  const requiredVars = [
+    'AZURE_AD_CLIENT_ID',
+    'AZURE_AD_CLIENT_SECRET',
+    'AZURE_AD_TENANT_ID',
+  ] as const;
+  const missingVars = requiredVars.filter((name) => !process.env[name]);
+
+  if (missingVars.length) {
+    throw new Error(
+      `Missing required Azure Entra ID env vars: ${missingVars.join(', ')}`
+    );
+  }
+  return {
+    clientId: process.env.AZURE_AD_CLIENT_ID!,
+    clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
+    tenantId: process.env.AZURE_AD_TENANT_ID!,
+  };
+};
 
 const octokit = new Octokit({
   auth: process.env.GITHUB_PERSONAL_ACCESS_TOKEN,
@@ -31,6 +54,9 @@ const baseAuthProvider = isLocal
       authOptions: TinaAuthJSOptions({
         databaseClient: databaseClient,
         secret: process.env.NEXTAUTH_SECRET,
+        providers: isAzureEntraIdEnabled
+          ? [AzureADProvider(getAzureProviderOptions())]
+          : undefined,
       }),
     });
 
